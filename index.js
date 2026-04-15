@@ -36,6 +36,16 @@ app.post('/webhook', async (req, res) => {
     const guild = await client.guilds.fetch(GUILD_ID);
     const member = await guild.members.fetch(discordId);
 
+    const normalized = String(roleStatus)
+    .trim()
+    .replace(/（/g, '(')
+    .replace(/）/g, ')');
+
+    const isHigh = normalized === '在校生(高)';
+    const isMiddle = normalized === '在校生(中)';
+    const isGrad = normalized === '卒業生';
+    const isExternal = normalized === '外部生';
+
     await member.roles.add(ROLE_MEMBER);
 
     if (roleStatus.includes('卒業生')) {
