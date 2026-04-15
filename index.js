@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 // ===== Discord設定 =====
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
