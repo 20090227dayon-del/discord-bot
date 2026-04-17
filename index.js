@@ -112,6 +112,16 @@ app.post('/webhook', async (req, res) => {
       }
     }
 
+    if (type === 'CUSTOM_DM') {
+      try {
+      await member.send(message);
+      } catch {
+      console.log(`DM送信失敗: ${discordId}`);
+      }
+      return res.sendStatus(200);
+      }
+
+
     // 卒業生
     if (isGrad) {
       await member.roles.add(ROLE_GRAD);
