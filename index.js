@@ -34,19 +34,80 @@ client.once('clientReady', () => {
 // ===== Webhook受信 =====
 app.post('/webhook', async (req, res) => {
   try {
-    const { discordId, roleStatus, notifyFlag, type, message } = req.body;
 
-    console.log("受信:", req.body);
+    const body = req.body;
+
+    const {
+      discordId,
+      roleStatus,
+      notifyFlag,
+      type,
+      message
+    } = body;
+
+    console.log("受信:", body);
+
+    // =========================
+    // 🚨 管理者確認通知
+    // =========================
+    if (type === "ADMIN_REVIEW") {
+
+      const adminChannel =
+        await client.channels.fetch("1504632169627259030");
+
+      const roleMention = "<@&1454874636763529379>";
+
+      let categoryText = "要確認登録";
+
+      if (body.category === "INVITER") {
+        categoryText = "未確認招待リンク";
+      }
+
+      if (body.category === "SUBACCOUNT") {
+        categoryText = "サブ垢登録";
+      }
+
+      if (body.category === "DELETE") {
+        categoryText = "アカウント削除";
+      }
+
+      await adminChannel.send({
+        content:
+`${roleMention}
+
+🚨 ${categoryText} の送信があります。
+
+【Discord表示名】
+${body.discordName}
+
+【DiscordユーザーID】
+${body.discordId}
+
+【PersonID】
+${body.personId}
+
+【Invitation Status】
+${body.invitationStatus}
+`
+      });
+
+      return res.send("ADMIN REVIEW SENT");
+    }
+
+    // ===== ここから既存処理 =====
 
     const guild = await client.guilds.fetch(GUILD_ID);
 
     let member;
+
     try {
       member = await guild.members.fetch(discordId);
     } catch (e) {
       console.log("member取得失敗:", discordId);
       return res.sendStatus(200);
     }
+
+    // 以下既存コード...
 
     // ===== INVALID DM =====
     if (type === 'INVALID') {
@@ -180,6 +241,7 @@ app.post('/webhook', async (req, res) => {
     console.error(err);
     res.sendStatus(500);
   }
+	
 });
 
 const PORT = process.env.PORT || 3000;
