@@ -71,6 +71,10 @@ app.post('/webhook', async (req, res) => {
         categoryText = "アカウント削除";
       }
 
+      if (body.category === "BLACKLIST") {
+        categoryText = "ブラックリスト検知";
+      }
+
       await adminChannel.send({
         content:
 `${roleMention}
