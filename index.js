@@ -55,7 +55,7 @@ app.post('/webhook', async (req, res) => {
       const adminChannel =
         await client.channels.fetch("1504632169627259030");
 
-      const roleMention = "<@&1237372571679199313>";
+      const roleMention = "<@&1454874636763529379>";
 
       let categoryText = "要確認登録";
 
