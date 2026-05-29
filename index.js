@@ -31,6 +31,105 @@ client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+// =========================
+// 🚨 管理者通知関数
+// =========================
+
+async function sendAdminReview(body) {
+
+  const adminChannel =
+    await client.channels.fetch("1504632169627259030");
+
+  const roleMention =
+    "<@&1454874636763529379>";
+
+  // =========================
+  // カテゴリ表示
+  // =========================
+
+  const categoryMap = {
+
+    INVITER:
+      "未確認招待リンク",
+
+    INVITER_REMINDER:
+      "未確認招待リンク（未処理リマインダー）",
+
+    SLACK:
+      "Slackアカウント確認",
+
+    SLACK_REMINDER:
+      "Slackアカウント確認（未処理リマインダー）",
+
+    BLACKLIST:
+      "ブラックリスト検知",
+
+    BLACKLIST_REMINDER:
+      "ブラックリスト（未処理リマインダー）",
+
+    SUBACCOUNT:
+      "サブ垢登録",
+
+    SUBACCOUNT_REMINDER:
+      "サブ垢登録（未処理リマインダー）",
+
+    CHANGE:
+      "変更申請",
+
+    CHANGE_REMINDER:
+      "変更申請（未処理リマインダー）",
+
+    DELETE:
+      "削除申請",
+
+    DELETE_REMINDER:
+      "削除申請（未処理リマインダー）"
+  };
+
+  const categoryText =
+    categoryMap[body.category]
+    || "要確認送信";
+
+  // =========================
+  // Invitation表示
+  // =========================
+
+  let invitationSection = "";
+
+  if (body.invitationStatus) {
+
+    invitationSection =
+`
+【Invitation Status】
+${body.invitationStatus}
+`;
+  }
+
+  // =========================
+  // 送信
+  // =========================
+
+  await adminChannel.send({
+
+    content:
+`${roleMention}
+
+🚨 ${categoryText}
+
+【Discord表示名】
+${body.discordName}
+
+【DiscordユーザーID】
+${body.discordId}
+
+【PersonID】
+${body.personId}
+${invitationSection}
+`
+  });
+}
+
+
 // ===== Webhook受信 =====
 app.post('/webhook', async (req, res) => {
   try {
@@ -48,54 +147,14 @@ app.post('/webhook', async (req, res) => {
     console.log("受信:", body);
 
     // =========================
-    // 🚨 管理者確認通知
+    // 🚨 管理者通知
     // =========================
+
     if (type === "ADMIN_REVIEW") {
 
-      const adminChannel =
-        await client.channels.fetch("1504632169627259030");
+     await sendAdminReview(body);
 
-      const roleMention = "<@&1454874636763529379>";
-
-      let categoryText = "要確認登録";
-
-      if (body.category === "INVITER") {
-        categoryText = "未確認招待リンク";
-      }
-
-      if (body.category === "SUBACCOUNT") {
-        categoryText = "サブ垢登録";
-      }
-
-      if (body.category === "DELETE") {
-        categoryText = "アカウント削除";
-      }
-
-      if (body.category === "BLACKLIST") {
-        categoryText = "ブラックリスト検知";
-      }
-
-      await adminChannel.send({
-        content:
-`${roleMention}
-
-🚨 ${categoryText} の送信があります。
-
-【Discord表示名】
-${body.discordName}
-
-【DiscordユーザーID】
-${body.discordId}
-
-【PersonID】
-${body.personId}
-
-【Invitation Status】
-${body.invitationStatus}
-`
-      });
-
-      return res.send("ADMIN REVIEW SENT");
+     return res.send("ADMIN REVIEW SENT");
     }
 
     // ===== ここから既存処理 =====
