@@ -105,16 +105,27 @@ ${body.invitationStatus}
 `;
   }
 
-  // =========================
-  // 送信
-  // =========================
+// =========================
+// ヘッダー
+// =========================
 
-  await adminChannel.send({
+const header =
+  body.type === "ADMIN_REMINDER"
+    ? "⏰ 管理者確認リマインダー"
+    : "🚨 管理者確認通知";
 
-    content:
+// =========================
+// 送信
+// =========================
+
+await adminChannel.send({
+
+  content:
 `${roleMention}
 
-🚨 ${categoryText}
+${header}
+
+${categoryText}
 
 【Discord表示名】
 ${body.discordName}
@@ -126,9 +137,8 @@ ${body.discordId}
 ${body.personId}
 ${invitationSection}
 `
-  });
+});
 }
-
 
 // ===== Webhook受信 =====
 app.post('/webhook', async (req, res) => {
@@ -146,16 +156,19 @@ app.post('/webhook', async (req, res) => {
 
     console.log("受信:", body);
 
-    // =========================
-    // 🚨 管理者通知
-    // =========================
+   // =========================
+// 🚨 管理者確認通知
+// =========================
 
-    if (type === "ADMIN_REVIEW") {
+if (
+  type === "ADMIN_REVIEW" ||
+  type === "ADMIN_REMINDER"
+) {
 
-     await sendAdminReview(body);
+  await sendAdminReview(body);
 
-     return res.send("ADMIN REVIEW SENT");
-    }
+  return res.send("ADMIN MESSAGE SENT");
+}
 
     // ===== ここから既存処理 =====
 
