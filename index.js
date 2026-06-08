@@ -31,6 +31,41 @@ client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
+client.on(
+  'guildMemberAdd',
+  async member => {
+
+    try {
+
+      await fetch(
+        process.env.GAS_WEBAPP_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            type: 'VISITOR_JOIN',
+            discordId: member.id
+          })
+        }
+      );
+
+      console.log(
+        `JOIN ${member.id}`
+      );
+
+    } catch (e) {
+
+      console.error(
+        'JOIN ERROR',
+        e
+      );
+    }
+  }
+);
+
 // =========================
 // 🚨 管理者通知関数
 // =========================
@@ -156,6 +191,82 @@ app.post('/webhook', async (req, res) => {
 
     console.log("受信:", body);
 
+// =========================
+// Visitor期限切れキック
+// =========================
+
+if (type === 'AUTO_KICK') {
+
+  const guild =
+    await client.guilds.fetch(GUILD_ID);
+
+  try {
+
+    const member =
+      await guild.members.fetch(discordId);
+
+    // Visitorのみ対象
+    if (
+      !member.roles.cache.has(
+        ROLE_VISITOR
+      )
+    ) {
+
+      return res.send(
+        'NOT_VISITOR'
+      );
+    }
+
+    await member.kick(
+      'Visitor期限切れ'
+    );
+
+    return res.send(
+      'KICK_SUCCESS'
+    );
+
+  } catch (e) {
+
+    console.log(e);
+
+    return res.send(
+      'KICK_FAILED'
+    );
+  }
+}
+
+// =========================
+// ブラックリストキック
+// =========================
+
+if (type === 'BLACKLIST_KICK') {
+
+  const guild =
+    await client.guilds.fetch(GUILD_ID);
+
+  try {
+
+    const member =
+      await guild.members.fetch(discordId);
+
+    await member.kick(
+      'BLACKLIST'
+    );
+
+    return res.send(
+      'KICK_SUCCESS'
+    );
+
+  } catch (e) {
+
+    console.log(e);
+
+    return res.send(
+      'KICK_FAILED'
+    );
+  }
+}
+
    // =========================
 // 🚨 管理者確認通知
 // =========================
@@ -277,6 +388,33 @@ if (
     if (member.roles.cache.has(ROLE_VISITOR)) {
       await member.roles.remove(ROLE_VISITOR);
     }
+
+    try {
+
+  await fetch(
+    process.env.GAS_WEBAPP_URL,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json'
+      },
+      body: JSON.stringify({
+        type:
+          'VISITOR_REGISTERED',
+        discordId:
+          member.id
+      })
+    }
+  );
+
+} catch (e) {
+
+  console.error(
+    'VISITOR_REGISTERED ERROR',
+    e
+  );
+}
 
     // 通知ロール
     const isNotify =
