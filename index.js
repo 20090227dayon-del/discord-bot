@@ -196,6 +196,28 @@ app.post('/webhook', async (req, res) => {
 
     console.log("受信:", body);
 
+if (type === 'SYNC_VISITORS') {
+
+  const guild =
+    await client.guilds.fetch(GUILD_ID);
+
+  const members =
+    await guild.members.fetch();
+
+  const visitorIds =
+    members
+      .filter(m =>
+        m.roles.cache.has(
+          ROLE_VISITOR
+        )
+      )
+      .map(m => m.id);
+
+  return res.json({
+    success: true,
+    visitorIds
+  });
+}
 
 
 if (type === 'VISITOR_REMINDER') {
