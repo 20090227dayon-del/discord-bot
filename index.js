@@ -31,45 +31,7 @@ client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-client.on(
-  'guildMemberAdd',
-  async member => {
 
-    try {
-
-      const response =
-        await fetch(
-          process.env.GAS_WEBAPP_URL,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
-            body: JSON.stringify({
-              type: 'VISITOR_JOIN',
-              discordId: member.id
-            })
-          }
-        );
-
-      console.log(
-        await response.text()
-      );
-
-      console.log(
-        `JOIN ${member.id}`
-      );
-
-    } catch (e) {
-
-      console.error(
-        'JOIN ERROR',
-        e
-      );
-    }
-  }
-);
 
 // =========================
 // 🚨 管理者通知関数
@@ -199,7 +161,9 @@ app.post('/webhook', async (req, res) => {
 if (type === 'SYNC_VISITORS') {
 
   const guild =
-    await client.guilds.fetch(GUILD_ID);
+    await client.guilds.fetch(
+      GUILD_ID
+    );
 
   const members =
     await guild.members.fetch();
@@ -213,22 +177,39 @@ if (type === 'SYNC_VISITORS') {
       )
       .map(m => m.id);
 
+  console.log(
+    `SYNC_VISITORS ${visitorIds.length}`
+  );
+
   return res.json({
     success: true,
     visitorIds
   });
 }
 
-
 if (type === 'VISITOR_REMINDER') {
 
   const guild =
     await client.guilds.fetch(GUILD_ID);
 
+
   try {
+
+    
 
     const member =
       await guild.members.fetch(discordId);
+
+if (
+  !member.roles.cache.has(
+    ROLE_VISITOR
+  )
+) {
+
+  return res.send(
+    'NOT_VISITOR'
+  );
+}
 
     await member.send(
 `こちらは、エヴァ同好会のメンバー籍自動登録システム @𝑀𝐴𝐺𝐼-𝟭 です。
@@ -458,49 +439,18 @@ if (
     }
 
     // ビジター削除
-    const wasVisitor =
+
+if (
   member.roles.cache.has(
     ROLE_VISITOR
-  );
-
-if (wasVisitor) {
+  )
+) {
 
   await member.roles.remove(
     ROLE_VISITOR
   );
-
-  try {
-
-    const response =
-      await fetch(
-        process.env.GAS_WEBAPP_URL,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-          body: JSON.stringify({
-            type:
-              'VISITOR_REGISTERED',
-            discordId:
-              member.id
-          })
-        }
-      );
-
-    console.log(
-      await response.text()
-    );
-
-  } catch (e) {
-
-    console.error(
-      'VISITOR_REGISTERED ERROR',
-      e
-    );
-  }
 }
+
 
     // 通知ロール
     const isNotify =
