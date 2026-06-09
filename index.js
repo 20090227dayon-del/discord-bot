@@ -37,19 +37,24 @@ client.on(
 
     try {
 
-      await fetch(
-        process.env.GAS_WEBAPP_URL,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-          body: JSON.stringify({
-            type: 'VISITOR_JOIN',
-            discordId: member.id
-          })
-        }
+      const response =
+        await fetch(
+          process.env.GAS_WEBAPP_URL,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
+            body: JSON.stringify({
+              type: 'VISITOR_JOIN',
+              discordId: member.id
+            })
+          }
+        );
+
+      console.log(
+        await response.text()
       );
 
       console.log(
@@ -191,6 +196,52 @@ app.post('/webhook', async (req, res) => {
 
     console.log("受信:", body);
 
+
+
+if (type === 'VISITOR_REMINDER') {
+
+  const guild =
+    await client.guilds.fetch(GUILD_ID);
+
+  try {
+
+    const member =
+      await guild.members.fetch(discordId);
+
+    await member.send(
+`こちらは、エヴァ同好会のメンバー籍自動登録システム @𝑀𝐴𝐺𝐼-𝟭 です。
+
+現在、ビジターロールの付与から12日が経過しています。
+
+ビジター期間は14日間となっており、
+期間終了後も籍のご登録がない場合は
+自動的にサーバーからキックされます。
+
+継続的な参加をご希望の場合は、
+お早めに籍のご登録をお願いいたします。
+
+このDMと行き違いで既に登録済みの場合は、
+ご容赦ください。`
+    );
+
+    return res.send(
+      'REMINDER_SENT'
+    );
+
+  } catch (e) {
+
+    console.log(
+      'VISITOR REMINDER FAILED',
+      discordId,
+      e
+    );
+
+    return res.send(
+      'REMINDER_FAILED'
+    );
+  }
+}
+
 // =========================
 // Visitor期限切れキック
 // =========================
@@ -306,6 +357,15 @@ if (
       return res.sendStatus(200);
     }
 
+    if (type === 'CUSTOM_DM') {
+      try {
+      await member.send(message);
+      } catch {
+      console.log(`DM送信失敗: ${discordId}`);
+      }
+      return res.sendStatus(200);
+      }
+
     // ===== 正規化 =====
     const normalized = String(roleStatus || '')
       .trim()
@@ -360,15 +420,6 @@ if (
       }
     }
 
-    if (type === 'CUSTOM_DM') {
-      try {
-      await member.send(message);
-      } catch {
-      console.log(`DM送信失敗: ${discordId}`);
-      }
-      return res.sendStatus(200);
-      }
-
 
     // 卒業生
     if (isGrad) {
@@ -385,35 +436,48 @@ if (
     }
 
     // ビジター削除
-    if (member.roles.cache.has(ROLE_VISITOR)) {
-      await member.roles.remove(ROLE_VISITOR);
-    }
-
-    try {
-
-  await fetch(
-    process.env.GAS_WEBAPP_URL,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type':
-          'application/json'
-      },
-      body: JSON.stringify({
-        type:
-          'VISITOR_REGISTERED',
-        discordId:
-          member.id
-      })
-    }
+    const wasVisitor =
+  member.roles.cache.has(
+    ROLE_VISITOR
   );
 
-} catch (e) {
+if (wasVisitor) {
 
-  console.error(
-    'VISITOR_REGISTERED ERROR',
-    e
+  await member.roles.remove(
+    ROLE_VISITOR
   );
+
+  try {
+
+    const response =
+      await fetch(
+        process.env.GAS_WEBAPP_URL,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            type:
+              'VISITOR_REGISTERED',
+            discordId:
+              member.id
+          })
+        }
+      );
+
+    console.log(
+      await response.text()
+    );
+
+  } catch (e) {
+
+    console.error(
+      'VISITOR_REGISTERED ERROR',
+      e
+    );
+  }
 }
 
     // 通知ロール
