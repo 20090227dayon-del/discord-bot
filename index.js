@@ -245,6 +245,33 @@ if (
   }
 }
 
+if (type === 'SYNC_NO_ROLE') {
+
+  const guild =
+    await client.guilds.fetch(
+      GUILD_ID
+    );
+
+  const members =
+    await guild.members.fetch();
+
+  const noRoleIds =
+    members
+      .filter(member => {
+
+        const roleCount =
+          member.roles.cache.size;
+
+        return roleCount === 1;
+      })
+      .map(member => member.id);
+
+  return res.json({
+    success: true,
+    noRoleIds
+  });
+}
+
 // =========================
 // Visitor期限切れキック
 // =========================
@@ -303,6 +330,47 @@ await member.kick(
 return res.send(
   'KICK_SUCCESS'
 );
+
+  } catch (e) {
+
+    console.log(e);
+
+    return res.send(
+      'KICK_FAILED'
+    );
+  }
+}
+
+if (type === 'NO_ROLE_KICK') {
+
+  const guild =
+    await client.guilds.fetch(
+      GUILD_ID
+    );
+
+  try {
+
+    const member =
+      await guild.members.fetch(
+        discordId
+      );
+
+    if (
+      member.roles.cache.size > 1
+    ) {
+
+      return res.send(
+        'HAS_ROLE'
+      );
+    }
+
+    await member.kick(
+      'No Role User'
+    );
+
+    return res.send(
+      'KICK_SUCCESS'
+    );
 
   } catch (e) {
 
