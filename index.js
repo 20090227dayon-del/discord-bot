@@ -158,6 +158,40 @@ app.post('/webhook', async (req, res) => {
 
     console.log("受信:", body);
 
+if (type === 'SYNC_NO_ROLE') {
+
+  console.log(
+    'SYNC_NO_ROLE CALLED'
+  );
+
+  const guild =
+    await client.guilds.fetch(
+      GUILD_ID
+    );
+
+  const members =
+    await guild.members.fetch();
+
+  const noRoleIds =
+    members
+      .filter(member => {
+
+        const roleCount =
+          member.roles.cache.size;
+
+        return roleCount === 1;
+      })
+      .map(member => member.id);
+
+  console.log(noRoleIds);
+
+  return res.json({
+    success: true,
+    noRoleIds
+  });
+}
+
+
 if (type === 'SYNC_VISITORS') {
 
   const guild =
