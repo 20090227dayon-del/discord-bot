@@ -271,13 +271,38 @@ if (type === 'AUTO_KICK') {
       );
     }
 
-    await member.kick(
-      'Visitor期限切れ'
-    );
+try {
 
-    return res.send(
-      'KICK_SUCCESS'
-    );
+  await member.send(
+`こちらは、エヴァ同好会のメンバー籍自動登録システム @𝑀𝐴𝐺𝐼-𝟭 です。
+
+ビジター期間（14日間）が終了し、
+期間内に籍のご登録が確認できなかったため、
+サーバーから自動退出処理を行いました。
+
+今後再度参加をご希望の場合は、
+改めてサーバーへご参加いただき、
+籍のご登録をお願いいたします。
+
+ご不明な点がございましたら、
+会長までお問い合わせください。`
+  );
+
+} catch (e) {
+
+  console.log(
+    'KICK DM FAILED',
+    discordId
+  );
+}
+
+await member.kick(
+  'Visitor期限切れ'
+);
+
+return res.send(
+  'KICK_SUCCESS'
+);
 
   } catch (e) {
 
