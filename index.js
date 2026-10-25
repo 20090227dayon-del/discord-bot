@@ -1,3 +1,8 @@
+console.log(
+  'Node.js version:',
+  process.version
+);
+
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 
