@@ -4,10 +4,40 @@ console.log(
 );
 
 const express = require('express');
+const crypto = require('node:crypto');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
 app.use(express.json());
+
+// ===== Webhook認証 =====
+
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
+if (!WEBHOOK_SECRET) {
+  throw new Error('WEBHOOK_SECRET が設定されていません');
+}
+
+function authenticateWebhook(req, res, next) {
+
+  const receivedSecret = req.get('X-Webhook-Secret');
+
+  if (!receivedSecret) {
+    return res.sendStatus(401);
+  }
+
+  const expected = Buffer.from(WEBHOOK_SECRET, 'utf8');
+  const received = Buffer.from(receivedSecret, 'utf8');
+
+  if (
+    expected.length !== received.length ||
+    !crypto.timingSafeEqual(expected, received)
+  ) {
+    return res.sendStatus(401);
+  }
+
+  next();
+}
 
 // ===== Discord設定 =====
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -148,7 +178,7 @@ ${invitationSection}
 }
 
 // ===== Webhook受信 =====
-app.post('/webhook', async (req, res) => {
+app.post('/webhook', authenticateWebhook, async (req, res) => {
   try {
 
     const body = req.body;
